@@ -39,6 +39,14 @@ warnings.filterwarnings(
     module="starlette.*",
 )
 
+# Suppress BeautifulSoup deprecated findAll/findAllNext/findAllPrevious warnings from dependencies
+warnings.filterwarnings(
+    "ignore",
+    message=r"^Call to deprecated method find(All|AllNext|AllPrevious).*",
+    category=DeprecationWarning,
+    module="bs4.*",
+)
+
 # ruff: noqa: E402 - Imports after warnings config for proper deprecation warning suppression
 import argparse
 import json

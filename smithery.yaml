@@ -1,0 +1,123 @@
+# Smithery configuration file for Maverick-MCP (Python)
+# Docs: https://smithery.ai/docs/build/project-config/smithery.yaml
+
+name: "@jamesjian-tech/maverick-mcp"
+version: "0.1.0"
+description: "Maverick-MCP: stock analysis, screening, and research MCP server"
+author:
+  name: "James Jian"
+  email: ""
+  url: "https://github.com/JamesJian-tech/maverick-mcp"
+license: "MIT"
+keywords: [finance, stocks, technical-analysis, screening, mcp-server, python]
+
+dependencies:
+  python: ">=3.12,<3.13"
+
+build:
+  dockerfile: Dockerfile
+  dockerBuildPath: "."
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      DATABASE_URL:
+        type: string
+        title: "Database URL"
+        description: "SQLAlchemy URL (e.g., postgresql://user:pass@host:5432/db or sqlite:///maverick_mcp.db). Optional; defaults to SQLite."
+      REDIS_HOST:
+        type: string
+        title: "Redis Host"
+        description: "Redis hostname (optional)."
+      REDIS_PORT:
+        type: string
+        title: "Redis Port"
+        description: "Redis port (optional)."
+      REDIS_DB:
+        type: string
+        title: "Redis DB"
+        description: "Redis database number (optional)."
+      REDIS_USERNAME:
+        type: string
+        title: "Redis Username"
+        description: "Redis username (optional)."
+      REDIS_PASSWORD:
+        type: string
+        title: "Redis Password"
+        description: "Redis password (optional)."
+      REDIS_SSL:
+        type: string
+        title: "Redis SSL"
+        description: "Use SSL for Redis connection (""true""/""false"")."
+      TIINGO_API_KEY:
+        type: string
+        title: "Tiingo API Key"
+        description: "Optional; enables premium news/sentiment and data."
+      EXA_API_KEY:
+        type: string
+        title: "Exa API Key"
+        description: "Optional; enables web research features."
+      OPENAI_API_KEY:
+        type: string
+        title: "OpenAI API Key"
+        description: "Optional; used for LLM features if configured."
+      ANTHROPIC_API_KEY:
+        type: string
+        title: "Anthropic API Key"
+        description: "Optional; used for LLM features if configured."
+      FRED_API_KEY:
+        type: string
+        title: "FRED API Key"
+        description: "Optional; enables Federal Reserve data."
+      SENTRY_DSN:
+        type: string
+        title: "Sentry DSN"
+        description: "Optional; enable Sentry monitoring."
+      LOG_LEVEL:
+        type: string
+        title: "Log Level"
+        description: "Logging level (debug, info, warning, error)."
+  commandFunction: |-
+    (config) => ({
+      command: "uv",
+      args: [
+        "run",
+        "python",
+        "-m",
+        "maverick_mcp.api.server",
+        "--transport",
+        "stdio"
+      ],
+      env: {
+        DATABASE_URL: config.DATABASE_URL,
+        REDIS_HOST: config.REDIS_HOST,
+        REDIS_PORT: config.REDIS_PORT,
+        REDIS_DB: config.REDIS_DB,
+        REDIS_USERNAME: config.REDIS_USERNAME,
+        REDIS_PASSWORD: config.REDIS_PASSWORD,
+        REDIS_SSL: config.REDIS_SSL,
+        TIINGO_API_KEY: config.TIINGO_API_KEY,
+        EXA_API_KEY: config.EXA_API_KEY,
+        OPENAI_API_KEY: config.OPENAI_API_KEY,
+        ANTHROPIC_API_KEY: config.ANTHROPIC_API_KEY,
+        FRED_API_KEY: config.FRED_API_KEY,
+        SENTRY_DSN: config.SENTRY_DSN,
+        LOG_LEVEL: config.LOG_LEVEL
+      }
+    })
+
+exampleConfig:
+  LOG_LEVEL: "info"
+  DATABASE_URL: "sqlite:///maverick_mcp.db"
+  REDIS_HOST: "localhost"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  REDIS_SSL: "false"
+  TIINGO_API_KEY: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  EXA_API_KEY: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  OPENAI_API_KEY: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ANTHROPIC_API_KEY: "sk-ant-xxxxxxxxxxxxxxxxxxxxxxx"
+  FRED_API_KEY: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  SENTRY_DSN: "https://examplePublicKey@o0.ingest.sentry.io/0"

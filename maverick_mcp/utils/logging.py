@@ -187,6 +187,14 @@ def setup_structured_logging(
         module="starlette.*",
     )
 
+    # Suppress BeautifulSoup deprecated findAll/findAllNext/findAllPrevious warnings (from dependencies)
+    warnings.filterwarnings(
+        "ignore",
+        message=r"^Call to deprecated method find(All|AllNext|AllPrevious).*",
+        category=DeprecationWarning,
+        module="bs4.*",
+    )
+
     root_logger = logging.getLogger()
     root_logger.setLevel(getattr(logging, log_level.upper()))
 

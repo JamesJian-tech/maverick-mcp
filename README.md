@@ -127,10 +127,12 @@ This configuration provides stable tool registration and prevents tools from dis
 > **Important**: Note the trailing slash in `/sse/` - this is REQUIRED to prevent redirect issues!
 
 **Config File Location:**
+
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 **Why This Configuration Works Best:**
+
 - Stable tool registration - tools don't disappear after initial connection
 - Reliable connection management through SSE transport
 - Proper session persistence for long-running analysis tasks
@@ -385,6 +387,7 @@ MaverickMCP provides 35+ financial analysis tools organized by category, includi
 - `coordinate_agents` - Multi-agent supervisor for complex research orchestration
 
 **Research Features:**
+
 - **Parallel Execution**: 7-256x speedup with intelligent agent orchestration
 - **Adaptive Timeouts**: 120s-600s based on research depth and complexity
 - **Smart Model Selection**: Automatic selection from 400+ models via OpenRouter
@@ -418,88 +421,106 @@ Test the comprehensive research capabilities and parallel processing improvement
 ### Core Research Features
 
 1. **Basic Research with Timeout Protection**
+
    ```
    "Research the current state of the AI semiconductor industry and identify the top 3 investment opportunities"
    ```
-   - Tests: Basic research, adaptive timeouts, industry analysis
 
+   - Tests: Basic research, adaptive timeouts, industry analysis
 2. **Comprehensive Company Research with Parallel Agents**
+
    ```
    "Provide comprehensive research on NVDA including fundamental analysis, technical indicators, competitive positioning, and market sentiment using multiple research approaches"
    ```
-   - Tests: Parallel orchestration, multi-agent coordination, company research
 
+   - Tests: Parallel orchestration, multi-agent coordination, company research
 3. **Cost-Optimized Quick Research**
+
    ```
    "Give me a quick overview of AAPL's recent earnings and stock performance"
    ```
+
    - Tests: Intelligent model selection, cost optimization, quick analysis
 
 ### Performance Testing
 
 4. **Parallel Performance Benchmark**
+
    ```
    "Research and compare MSFT, GOOGL, and AMZN simultaneously focusing on cloud computing revenue growth"
    ```
-   - Tests: Parallel execution speedup (7-256x), multi-company analysis
 
+   - Tests: Parallel execution speedup (7-256x), multi-company analysis
 5. **Deep Research with Early Termination**
+
    ```
    "Conduct exhaustive research on Tesla's autonomous driving technology and its impact on the stock valuation"
    ```
+
    - Tests: Deep research depth, confidence tracking, early termination (0.85 threshold)
 
 ### Error Handling & Recovery
 
 6. **Error Recovery and Circuit Breaker Test**
+
    ```
    "Research 10 penny stocks with unusual options activity and provide risk assessments for each"
    ```
-   - Tests: Circuit breaker activation, error handling, fallback mechanisms
 
+   - Tests: Circuit breaker activation, error handling, fallback mechanisms
 7. **Supervisor Agent Coordination**
+
    ```
    "Analyze the renewable energy sector using both technical and fundamental analysis approaches, then synthesize the findings into actionable investment recommendations"
    ```
+
    - Tests: Supervisor routing, agent coordination, result synthesis
 
 ### Advanced Features
 
 8. **Sentiment Analysis with Content Filtering**
+
    ```
    "Analyze market sentiment for Bitcoin and cryptocurrency stocks over the past week, filtering for high-credibility sources only"
    ```
-   - Tests: Sentiment analysis, content filtering, source credibility
 
+   - Tests: Sentiment analysis, content filtering, source credibility
 9. **Timeout Stress Test**
+
    ```
    "Research the entire S&P 500 technology sector companies and rank them by growth potential"
    ```
-   - Tests: Timeout management, large-scale analysis, performance under load
 
+   - Tests: Timeout management, large-scale analysis, performance under load
 10. **Multi-Modal Research Integration**
+
     ```
     "Research AMD using technical analysis, then find recent news about their AI chips, analyze competitor Intel's position, and provide a comprehensive investment thesis with risk assessment"
     ```
+
     - Tests: All research modes, integration, synthesis, risk assessment
 
 ### Bonus Edge Case Tests
 
 11. **Empty/Invalid Query Handling**
+
     ```
     "Research [intentionally leave blank or use symbol that doesn't exist like XYZABC]"
     ```
-    - Tests: Error messages, helpful fix suggestions
 
+    - Tests: Error messages, helpful fix suggestions
 12. **Token Budget Optimization**
+
     ```
     "Provide the most comprehensive possible analysis of the entire semiconductor industry including all major players, supply chain dynamics, geopolitical factors, and 5-year projections"
     ```
+
     - Tests: Progressive token allocation, budget management, depth vs breadth
 
 ### Expected Performance Metrics
 
 When running these tests, you should observe:
+
 - **Parallel Speedup**: 7-256x faster for multi-entity queries
 - **Response Times**: Simple queries ~10s, complex research 30-120s
 - **Cost Efficiency**: 60-80% reduction vs premium-only models
@@ -530,16 +551,19 @@ docker-compose up -d
 ### Common Issues
 
 **Tools Disappearing in Claude Desktop:**
+
 - **Solution**: Ensure SSE endpoint has trailing slash: `http://localhost:8003/sse/`
 - The 307 redirect from `/sse` to `/sse/` causes tool registration to fail
 - Always use the exact configuration with trailing slash shown above
 
 **Research Tool Timeouts:**
+
 - Research tools have adaptive timeouts (120s-600s)
 - Deep research may take 2-10 minutes depending on complexity
 - Monitor progress in server logs with `make tail-log`
 
 **OpenRouter Not Working:**
+
 - Ensure `OPENROUTER_API_KEY` is set in `.env`
 - Check API key validity at [openrouter.ai](https://openrouter.ai)
 - System falls back to direct providers if OpenRouter unavailable
@@ -636,7 +660,7 @@ For issues or questions:
 ### Performance Improvements
 
 - **Parallel Agent Execution**: Increased concurrent agents from 4 to 6
-- **Optimized Semaphores**: BoundedSemaphore for better resource management  
+- **Optimized Semaphores**: BoundedSemaphore for better resource management
 - **Reduced Rate Limiting**: Delays decreased from 0.5s to 0.05s
 - **Batch Processing**: Improved throughput for multiple research tasks
 - **Smart Caching**: Redis-powered with in-memory fallback
@@ -704,16 +728,16 @@ Built for traders and investors. Happy Trading!
 
 ## Disclaimer
 
-<sub>**This software is for educational and informational purposes only. It is NOT financial advice.**</sub>
+`<sub>`**This software is for educational and informational purposes only. It is NOT financial advice.**`</sub>`
 
-<sub>**Investment Risk Warning**: Past performance does not guarantee future results. All investments carry risk of loss, including total loss of capital. Technical analysis and screening results are not predictive of future performance. Market data may be delayed, inaccurate, or incomplete.</sub>
+`<sub>`**Investment Risk Warning**: Past performance does not guarantee future results. All investments carry risk of loss, including total loss of capital. Technical analysis and screening results are not predictive of future performance. Market data may be delayed, inaccurate, or incomplete.`</sub>`
 
-<sub>**No Professional Advice**: This tool provides data analysis, not investment recommendations. Always consult with a qualified financial advisor before making investment decisions. The developers are not licensed financial advisors or investment professionals. Nothing in this software constitutes professional financial, investment, legal, or tax advice.</sub>
+`<sub>`**No Professional Advice**: This tool provides data analysis, not investment recommendations. Always consult with a qualified financial advisor before making investment decisions. The developers are not licensed financial advisors or investment professionals. Nothing in this software constitutes professional financial, investment, legal, or tax advice.`</sub>`
 
-<sub>**Data and Accuracy**: Market data provided by third-party sources (Tiingo, Yahoo Finance, FRED). Data may contain errors, delays, or omissions. Technical indicators are mathematical calculations based on historical data. No warranty is made regarding data accuracy or completeness.</sub>
+`<sub>`**Data and Accuracy**: Market data provided by third-party sources (Tiingo, Yahoo Finance, FRED). Data may contain errors, delays, or omissions. Technical indicators are mathematical calculations based on historical data. No warranty is made regarding data accuracy or completeness.`</sub>`
 
-<sub>**Regulatory Compliance**: US Users - This software is not registered with the SEC, CFTC, or other regulatory bodies. International Users - Check local financial software regulations before use. Users are responsible for compliance with all applicable laws and regulations. Some features may not be available in certain jurisdictions.</sub>
+`<sub>`**Regulatory Compliance**: US Users - This software is not registered with the SEC, CFTC, or other regulatory bodies. International Users - Check local financial software regulations before use. Users are responsible for compliance with all applicable laws and regulations. Some features may not be available in certain jurisdictions.`</sub>`
 
-<sub>**Limitation of Liability**: Developers disclaim all liability for investment losses or damages. Use this software at your own risk. No guarantee is made regarding software availability or functionality.</sub>
+`<sub>`**Limitation of Liability**: Developers disclaim all liability for investment losses or damages. Use this software at your own risk. No guarantee is made regarding software availability or functionality.`</sub>`
 
-<sub>By using MaverickMCP, you acknowledge these risks and agree to use the software for educational purposes only.</sub>
+`<sub>`By using MaverickMCP, you acknowledge these risks and agree to use the software for educational purposes only.`</sub>`

@@ -1,0 +1,17 @@
+{
+	"servers": {
+		"my-mcp-server-cbd217a8": {
+			"type": "stdio",
+			"command": "uv",
+			"args": [
+				"run",
+				"python",
+				"-m",
+				"maverick_mcp.api.server",
+				"--transport",
+				"stdio"
+			]
+		}
+	},
+	"inputs": []
+}
