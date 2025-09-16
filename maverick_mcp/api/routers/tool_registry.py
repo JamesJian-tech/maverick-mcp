@@ -154,6 +154,156 @@ def register_data_tools(mcp: FastMCP) -> None:
     mcp.tool(name="data_clear_cache")(clear_cache)
 
 
+def register_trend_analysis_tools(mcp: FastMCP) -> None:
+    """Register trend analysis tools directly on main server"""
+    from maverick_mcp.tools.trend_scorer import (
+        BatchTrendScoreInput,
+        TrendScoreInput,
+        trend_scorer,
+    )
+
+    @mcp.tool(name="trend_calculate_single_score")
+    async def calculate_single_trend_score(
+        ticker: str, 
+        period: str = "6mo", 
+        fixed_end_date: str = None
+    ):
+        """
+        计算单个股票的趋势评分
+        
+        基于5个技术指标（MA、MACD、ADX、RSI、OBV）计算综合趋势分数：
+        - 移动平均线 (MA): 评分范围 (-3, 3)
+        - MACD: 评分范围 (-2, 2)  
+        - ADX: 评分范围 (-2, 2)
+        - RSI: 评分范围 (-1, 1)
+        - OBV: 评分范围 (-1, 1)
+        
+        总评分范围: -9到+9，标准化为0-100分
+        
+        Args:
+            ticker: 股票代码
+            period: 数据期间 (1mo, 3mo, 6mo, 1y, 2y)
+            fixed_end_date: 固定截止日期 YYYY-MM-DD (可选)
+            
+        Returns:
+            Dictionary containing trend score analysis
+        """
+        # 创建带固定日期的评分器实例
+        scorer = trend_scorer.__class__(fixed_end_date=fixed_end_date)
+        
+        result = scorer.calculate_trend_score(ticker.upper(), period)
+        if not result:
+            return {
+                "error": f"无法获取 {ticker} 的数据或数据不足",
+                "ticker": ticker.upper(),
+                "period": period
+            }
+        
+        return result.model_dump()
+
+    @mcp.tool(name="trend_calculate_batch_scores")
+    async def calculate_batch_trend_scores(
+        tickers: str,  # JSON string of ticker list
+        period: str = "6mo",
+        fixed_end_date: str = None
+    ):
+        """
+        批量计算多个股票的趋势评分
+        
+        Args:
+            tickers: 股票代码列表的JSON字符串，例如: '["AAPL", "MSFT", "GOOGL"]'
+            period: 数据期间 (1mo, 3mo, 6mo, 1y, 2y)
+            fixed_end_date: 固定截止日期 YYYY-MM-DD (可选)
+            
+        Returns:
+            List of dictionaries containing trend score analysis for each ticker
+        """
+        import json
+        try:
+            ticker_list = json.loads(tickers)
+            if not isinstance(ticker_list, list):
+                return {"error": "tickers 参数必须是股票代码列表的JSON字符串"}
+        except json.JSONDecodeError:
+            return {"error": "无效的JSON格式"}
+        
+        # 创建带固定日期的评分器实例
+        scorer = trend_scorer.__class__(fixed_end_date=fixed_end_date)
+        
+        # 标准化股票代码
+        ticker_list = [t.upper() for t in ticker_list]
+        
+        results = scorer.calculate_batch_scores(ticker_list, period)
+        
+        if not results:
+            return {
+                "error": "无法获取任何股票的数据",
+                "tickers": ticker_list,
+                "period": period
+            }
+        
+        return {
+            "results": [r.model_dump() for r in results],
+            "summary": {
+                "total_processed": len(results),
+                "highest_score": max(r.normalized_trend_score for r in results),
+                "lowest_score": min(r.normalized_trend_score for r in results),
+                "average_score": sum(r.normalized_trend_score for r in results) / len(results)
+            }
+        }
+
+    @mcp.tool(name="trend_get_score_explanation")
+    async def get_trend_score_explanation():
+        """
+        获取趋势评分系统的详细说明
+        
+        Returns:
+            Dictionary explaining the trend scoring methodology
+        """
+        return {
+            "system_overview": "S&P 500趋势评分系统基于5个技术指标计算综合趋势分数",
+            "indicators": {
+                "MA": {
+                    "name": "移动平均线",
+                    "range": "(-3, 3)",
+                    "description": "基于20日和50日移动平均线的相对位置"
+                },
+                "MACD": {
+                    "name": "MACD指标",
+                    "range": "(-2, 2)",
+                    "description": "基于MACD线与信号线的关系"
+                },
+                "ADX": {
+                    "name": "ADX趋势强度",
+                    "range": "(-2, 2)",
+                    "description": "基于ADX值和+DI/-DI的关系"
+                },
+                "RSI": {
+                    "name": "相对强弱指标",
+                    "range": "(-1, 1)",
+                    "description": "基于RSI的超买超卖区间"
+                },
+                "OBV": {
+                    "name": "成交量平衡指标",
+                    "range": "(-1, 1)",
+                    "description": "基于最近5天的OBV趋势"
+                }
+            },
+            "scoring_method": {
+                "raw_score_range": "(-9, 9)",
+                "normalized_range": "(0, 100)",
+                "weight_per_indicator": 0.2333,
+                "formula": "标准化分数 = (加权原始分数 + 2.1) / 4.2 * 100"
+            },
+            "interpretation": {
+                "80-100": "强烈看涨",
+                "60-79": "看涨",
+                "40-59": "中性",
+                "20-39": "看跌",
+                "0-19": "强烈看跌"
+            }
+        }
+
+
 def register_performance_tools(mcp: FastMCP) -> None:
     """Register performance tools directly on main server"""
     from maverick_mcp.api.routers.performance import (
@@ -368,6 +518,12 @@ def register_all_router_tools(mcp: FastMCP) -> None:
         logger.info("✓ Performance tools registered successfully")
     except Exception as e:
         logger.error(f"✗ Failed to register performance tools: {e}")
+
+    try:
+        register_trend_analysis_tools(mcp)
+        logger.info("✓ Trend analysis tools registered successfully")
+    except Exception as e:
+        logger.error(f"✗ Failed to register trend analysis tools: {e}")
 
     try:
         register_agent_tools(mcp)

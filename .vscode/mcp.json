@@ -1,6 +1,6 @@
 {
 	"servers": {
-		"my-mcp-server-cbd217a8": {
+		"maverick-mcp": {
 			"type": "stdio",
 			"command": "uv",
 			"args": [

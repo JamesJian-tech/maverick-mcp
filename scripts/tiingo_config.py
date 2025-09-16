@@ -243,7 +243,7 @@ SYMBOL_LISTS = {
         "TSLA",
         "META",
         "NVDA",
-        "BRK.B",
+        "BRK-B",
         "UNH",
         "JNJ",
         "V",

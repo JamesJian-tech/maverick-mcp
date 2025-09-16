@@ -8,7 +8,8 @@ mcp_ prefixed tables, making Maverick-MCP completely independent.
 Usage:
     python scripts/load_market_data.py --symbols AAPL,MSFT,GOOGL
     python scripts/load_market_data.py --file symbols.txt
-    python scripts/load_market_data.py --sp500  # Load S&P 500 stocks
+    python scripts/load_market_data.py --sp500  # Load S&P 500 stocks (default 100)
+    python scripts/load_market_data.py --sp500 --sp500-count 200  # Load first 200 S&P 500 stocks
 """
 
 import argparse
@@ -19,7 +20,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import aiohttp
+from typing import Any
 import pandas as pd
 
 # Add parent directory to path for imports
@@ -56,10 +57,16 @@ class TiingoDataLoader:
             raise ValueError("Tiingo API token required. Set TIINGO_API_TOKEN env var.")
 
         self.base_url = "https://api.tiingo.com/tiingo"
-        self.session: aiohttp.ClientSession | None = None
+        self.session = None  # set in __aenter__ when aiohttp is available
 
     async def __aenter__(self):
         """Async context manager entry."""
+        try:
+            import aiohttp  # defer import to runtime to avoid hard dependency for symbol fetching
+        except ModuleNotFoundError as e:
+            raise RuntimeError(
+                "aiohttp is required to call Tiingo APIs. Install deps (e.g., `uv sync` or `pip install aiohttp`) or run via `uv run`."
+            ) from e
         self.session = aiohttp.ClientSession(
             headers={"Authorization": f"Token {self.api_token}"}
         )
@@ -228,7 +235,7 @@ def get_sp500_symbols() -> list[str]:
         "TSLA",
         "META",
         "NVDA",
-        "BRK.B",
+        "BRK-B",
         "UNH",
         "JNJ",
         "V",
@@ -324,6 +331,42 @@ def get_sp500_symbols() -> list[str]:
     ]
 
 
+def get_sp500_symbols_dynamic(limit: int = 200) -> list[str]:
+    """Dynamically fetch S&P 500 symbols and return up to `limit` tickers.
+
+    Strategy:
+    - Try Wikipedia (pandas.read_html) and normalize tickers ('.' -> '-')
+    - Uppercase, de-duplicate while preserving order
+    - Return the first `limit` symbols
+    - Fallback to built-in Top 100 list if web fetch fails
+    """
+    try:
+        url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+        tables = pd.read_html(url)
+        df = tables[0]
+        # Support both 'Symbol' and lowercase if different locale
+        symbol_col = "Symbol" if "Symbol" in df.columns else "symbol"
+        symbols = []
+        seen = set()
+        for raw in df[symbol_col].astype(str).tolist():
+            sym = raw.strip().upper().replace(".", "-")
+            if sym and sym not in seen:
+                seen.add(sym)
+                symbols.append(sym)
+
+        if not symbols:
+            raise ValueError("No symbols parsed from Wikipedia table")
+
+        logger.info(f"Fetched {len(symbols)} S&P 500 symbols from Wikipedia")
+        return symbols[: max(0, int(limit))]
+
+    except Exception as e:
+        logger.warning(f"Falling back to built-in list, web fetch failed: {e}")
+        base = get_sp500_symbols()
+        # If limit <= base list, slice; otherwise just return base (<=100)
+        return base[: max(0, int(limit))]
+
+
 def load_symbols_from_file(file_path: str) -> list[str]:
     """
     Load stock symbols from a text file.
@@ -369,6 +412,12 @@ async def main():
         "--sp500", action="store_true", help="Load top 100 S&P 500 stocks"
     )
     parser.add_argument(
+        "--sp500-count",
+        type=int,
+        default=100,
+        help="When using --sp500, number of S&P 500 symbols to load (e.g., 200)",
+    )
+    parser.add_argument(
         "--create-tables",
         action="store_true",
         help="Create database tables if they don't exist",
@@ -384,7 +433,8 @@ async def main():
     elif args.file:
         symbols = load_symbols_from_file(args.file)
     elif args.sp500:
-        symbols = get_sp500_symbols()
+        # Prefer dynamic fetch to support arbitrary counts; fallback to static list
+        symbols = get_sp500_symbols_dynamic(limit=args.sp500_count)
     else:
         parser.print_help()
         sys.exit(1)
