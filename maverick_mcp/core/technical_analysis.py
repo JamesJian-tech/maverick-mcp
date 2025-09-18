@@ -64,17 +64,18 @@ def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
         df["macd_12_26_9"] = np.nan
         df["macds_12_26_9"] = np.nan
         df["macdh_12_26_9"] = np.nan
-    # Bollinger Bands
-    bbands = ta.bbands(df["close"], length=20, std=2.0)
-    if bbands is not None and not bbands.empty:
-        df["sma_20"] = bbands["BBM_20_2.0"]
-        df["bbu_20_2.0"] = bbands["BBU_20_2.0"]
-        df["bbl_20_2.0"] = bbands["BBL_20_2.0"]
-    else:
-        df["sma_20"] = np.nan
-        df["bbu_20_2.0"] = np.nan
-        df["bbl_20_2.0"] = np.nan
-    df["stdev"] = df["close"].rolling(window=20).std()
+    # Bollinger Bands (robust, config-driven)
+    period = TECHNICAL_CONFIG.BOLLINGER_PERIOD
+    std_mult = TECHNICAL_CONFIG.BOLLINGER_STD_DEV
+
+    # Always compute SMA_20 and rolling stdev
+    # Avoid dependency on pandas_ta-specific column naming
+    df["sma_20"] = ta.sma(df["close"], length=period)
+    df["stdev"] = df["close"].rolling(window=period).std()
+
+    # Compute upper/lower bands with consistent column names
+    df["bbu_20_2.0"] = df["sma_20"] + std_mult * df["stdev"]
+    df["bbl_20_2.0"] = df["sma_20"] - std_mult * df["stdev"]
     # ATR
     df["atr"] = ta.atr(df["high"], df["low"], df["close"], length=14)
     # Stochastic Oscillator
