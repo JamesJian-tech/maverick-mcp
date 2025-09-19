@@ -25,6 +25,15 @@ from typing import Any
 # Add the project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Load .env so OPENROUTER_API_KEY and others are available when using `uv run`
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except Exception:
+    # If python-dotenv isn't available, proceed; env vars may be provided by shell
+    pass
+
 from maverick_mcp.providers.openrouter_provider import OpenRouterProvider, TaskType
 from maverick_mcp.utils.llm_optimization import AdaptiveModelSelector
 
@@ -42,6 +51,9 @@ class CompleteSpeedValidator:
             )
         self.openrouter_provider = OpenRouterProvider(api_key=api_key)
         self.model_selector = AdaptiveModelSelector(self.openrouter_provider)
+        # Optional: force a specific OpenRouter model for all requests
+        # Example: export OPENROUTER_FORCE_MODEL="google/gemini-2.5-flash"
+        self.forced_model_id = os.getenv("OPENROUTER_FORCE_MODEL")
 
         # Validation scenarios representing real-world usage
         self.validation_scenarios = [
@@ -143,7 +155,10 @@ class CompleteSpeedValidator:
 
         try:
             # Test OpenRouter connection with fast model
-            test_llm = self.openrouter_provider.get_llm(TaskType.QUICK_ANSWER)
+            test_llm = self.openrouter_provider.get_llm(
+                TaskType.QUICK_ANSWER,
+                model_override=self.forced_model_id,
+            )
 
             start_time = time.time()
             from langchain_core.messages import HumanMessage
@@ -166,6 +181,8 @@ class CompleteSpeedValidator:
 
             print(f"   Available models: {len(MODEL_PROFILES)} profiles")
             print("   Speed optimization: Enabled")
+            if self.forced_model_id:
+                print(f"   Forced model active via env: {self.forced_model_id}")
 
             return True
 
@@ -208,12 +225,16 @@ class CompleteSpeedValidator:
                     content_size_tokens=len(phase["prompt"]) // 4,
                 )
 
-                print(f"      Selected Model: {model_config.model_id}")
+                effective_model = self.forced_model_id or model_config.model_id
+                print(
+                    f"      Selected Model: {effective_model}"
+                    + (" (forced)" if self.forced_model_id else "")
+                )
                 print(f"      Max Timeout: {model_config.timeout_seconds}s")
 
                 # Execute phase
                 llm = self.openrouter_provider.get_llm(
-                    model_override=model_config.model_id,
+                    model_override=effective_model,
                     temperature=model_config.temperature,
                     max_tokens=model_config.max_tokens,
                 )

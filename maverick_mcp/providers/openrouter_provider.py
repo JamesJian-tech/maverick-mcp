@@ -5,6 +5,7 @@ with automatic model selection based on task requirements.
 """
 
 import logging
+import os
 from enum import Enum
 from typing import Any
 
@@ -231,6 +232,23 @@ MODEL_PROFILES = {
         ],
         temperature=0.3,
     ),
+    "x-ai/grok-code-fast-1": ModelProfile(
+        model_id="x-ai/grok-code-fast-1",
+        name="Grok Code Fast 1",
+        provider="xai",
+        context_length=131072,
+        cost_per_million_input=0.10,
+        cost_per_million_output=0.40,
+        speed_rating=9,  # Fast coding-specialized model
+        quality_rating=8,
+        best_for=[
+            TaskType.QUICK_ANSWER,
+            TaskType.TECHNICAL_ANALYSIS,
+            TaskType.QUERY_CLASSIFICATION,
+            TaskType.DEEP_RESEARCH,
+        ],
+        temperature=0.1,
+    ),
 }
 
 
@@ -246,6 +264,14 @@ class OpenRouterProvider:
         self.api_key = api_key
         self.base_url = "https://openrouter.ai/api/v1"
         self._model_usage_stats: dict[str, dict[str, int]] = {}
+        # Optional global override via environment variable
+        # Example: export OPENROUTER_FORCE_MODEL="google/gemini-2.5-flash"
+        self.forced_model_id: str | None = os.getenv("OPENROUTER_FORCE_MODEL")
+        if self.forced_model_id:
+            logger.warning(
+                "OPENROUTER_FORCE_MODEL is set. All requests without explicit model_override will use '%s'",
+                self.forced_model_id,
+            )
 
     def get_llm(
         self,
@@ -273,6 +299,10 @@ class OpenRouterProvider:
         Returns:
             Configured ChatOpenAI instance
         """
+        # Env-level forced model applies when no explicit override is provided
+        if not model_override and getattr(self, "forced_model_id", None):
+            model_override = self.forced_model_id
+
         # Use override if provided
         if model_override:
             model_id = model_override

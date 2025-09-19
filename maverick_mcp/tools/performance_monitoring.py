@@ -32,6 +32,36 @@ async def get_redis_connection_health() -> dict[str, Any]:
         Dictionary with Redis health information
     """
     try:
+        import asyncio
+
+        # Check if event loop is running and not closed
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_closed():
+                logger.warning("Event loop is closed, skipping Redis health check")
+                return {
+                    "redis_health": {
+                        "status": "error",
+                        "error": "Event loop is closed",
+                        "basic_operations_working": False,
+                        "operation_latency_ms": None,
+                    },
+                    "connection_metrics": {},
+                    "timestamp": datetime.now().isoformat(),
+                }
+        except RuntimeError:
+            logger.warning("No event loop running, skipping Redis health check")
+            return {
+                "redis_health": {
+                    "status": "error",
+                    "error": "No event loop running",
+                    "basic_operations_working": False,
+                    "operation_latency_ms": None,
+                },
+                "connection_metrics": {},
+                "timestamp": datetime.now().isoformat(),
+            }
+
         metrics = redis_manager.get_metrics()
 
         # Test basic Redis operations

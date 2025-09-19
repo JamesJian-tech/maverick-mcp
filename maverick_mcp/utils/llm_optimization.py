@@ -103,7 +103,7 @@ class AdaptiveModelSelector:
         # OPTIMIZATION: Prioritize speed with increased batch sizes
         if content_size > 20000:  # Large content needs fast + capable models
             return ModelConfiguration(
-                model_id="google/gemini-2.5-flash",  # 199 tokens/sec - fastest available
+                model_id="google/gemini-2.5-flash",  # 199 tokens/sec - FASTEST available
                 max_tokens=min(800, content_size // 25),  # Adaptive token limit
                 temperature=0.05,  # OPTIMIZATION: Minimal temp for deterministic fast response
                 timeout_seconds=5,  # OPTIMIZATION: Reduced from 8s

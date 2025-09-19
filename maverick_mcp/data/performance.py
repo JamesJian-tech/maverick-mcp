@@ -118,6 +118,18 @@ class RedisConnectionManager:
         Returns:
             Redis client or None if unavailable
         """
+        import asyncio
+
+        # Check if event loop is running and not closed
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_closed():
+                logger.warning("Event loop is closed, cannot get Redis client")
+                return None
+        except RuntimeError:
+            logger.warning("No event loop running, cannot get Redis client")
+            return None
+
         if not self._initialized:
             await self.initialize()
 
@@ -240,16 +252,42 @@ class RedisConnectionManager:
 
     async def close(self):
         """Close connection pool gracefully."""
-        if self._client:
-            await self._client.close()
-            self._metrics["connections_closed"] += 1
+        import asyncio
 
-        if self._pool:
-            await self._pool.disconnect()
+        if not self._initialized:
+            return
 
-        self._initialized = False
-        self._healthy = False
-        logger.info("Redis connection pool closed")
+        try:
+            # Check if event loop is still running
+            loop = asyncio.get_running_loop()
+            if loop.is_closed():
+                logger.warning(
+                    "Event loop is closed, cannot close Redis connection gracefully"
+                )
+                self._initialized = False
+                self._healthy = False
+                return
+        except RuntimeError:
+            logger.warning("No event loop running, skipping Redis connection cleanup")
+            self._initialized = False
+            self._healthy = False
+            return
+
+        try:
+            if self._client:
+                await self._client.close()
+                self._metrics["connections_closed"] += 1
+
+            if self._pool:
+                await self._pool.disconnect()
+
+            self._initialized = False
+            self._healthy = False
+            logger.info("Redis connection pool closed")
+        except Exception as e:
+            logger.warning(f"Error during Redis connection cleanup: {e}")
+            self._initialized = False
+            self._healthy = False
 
 
 # Global Redis connection manager instance
